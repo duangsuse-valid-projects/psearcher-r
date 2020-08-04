@@ -7,6 +7,6 @@ class Bing(BaseEngine):
   def parseResult(self, soup):
     def post(e):
       h = e.h2
-      result = { 'title': h.text.strip(), 'link': h.a['href'],
+      return { 'title': h.text.strip(), 'link': h.a['href'],
         'desc': e.find('p').text }
     return [post(li) for li in soup.findAll('li', {'class': 'b_algo'})]
