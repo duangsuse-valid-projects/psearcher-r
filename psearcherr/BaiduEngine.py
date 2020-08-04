@@ -1,11 +1,18 @@
-from .BaseEngine import BaseEngine, EngineInfo
+from .BaseEngine import BaseEngine, EngineInfo, let
+
 class Baidu(BaseEngine):
-  INFO = EngineInfo("Baidu", "http://www.baidu.com/s", "word", "pn", 0)
-  def __init__(self, kw, **kwargs):
-    super().__init__(kw, info=Baidu.INFO, **kwargs)
+  INFO = EngineInfo("Baidu", "http://www.baidu.com/s", "wd", "pn", 0)
+  def __init__(self, **kwargs):
+    super().__init__(info=Baidu.INFO, **kwargs)
 
   def parseResult(self, soup):
-    def post(e):
+    text = lambda it: it.text
+    def proc(e):
       a = e.h3.a
-      return { 'title': a.getText(), 'link': a['href'] }
-    return [post(div) for div in soup.findAll('div', {'class': 'result'})]
+      d = e.select_one('div .c-span-last')
+      res = { 'title': a.getText(), 'link': a['href'] }
+      if d != None: res.update({ 'desc': let(text, findCls(d, 'c-abstract')), 'showurl': let(text, d.select_one('.c-showurl')) })
+      return res
+    return [proc(div) for div in soup.findAll('div', {'class': 'result'})]
+
+def findCls(e, css, tag="div"): return e.find(tag, {"class":css})

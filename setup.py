@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 
 setup(
-  name="psearcherr", version="0.1.0",
+  name="psearcherr", version="0.1.1",
   url="https://github.com/duangsuse-valid-projects/psearcher-r",
   author="duangsuse", author_email="fedora-opensuse@outlook.com", license="MIT",
   description="Rewrite for Python baidu search client: iridesc/psearcher",

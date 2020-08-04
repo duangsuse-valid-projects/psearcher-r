@@ -1,15 +1,16 @@
 import requests
 from retry import retry
 from bs4 import BeautifulSoup
-from loger import setting as loger_setting, makelog
+from loger import makelog
 
 import time, random #timeout
+from dataclasses import dataclass
 
+@dataclass
 class EngineInfo:
-  def __init__(self, name, url, p_kw, p_pn, idx_z, idx_step=10):
-    self.name, self.url, = name, url
-    self.keyParam, self.pageParam = p_kw, p_pn
-    self.startIndex, self.indexStep = idx_z, idx_step
+  name: str; url: str
+  keyParam: str; pageParam: str
+  startIndex: int; indexStep: int = 10
 
 class BaseEngine:
   headers = {
@@ -19,9 +20,9 @@ class BaseEngine:
     "Accept-Language": "zh-CN,zh;q=0.8"
   }
   n_retries = 3; dt_retries = 2
-  def __init__(self, kw, info=None, timeout=10):
+  def __init__(self, info=None, timeout=5):
     self.session = requests.session(); self.timeout=timeout
-    self.info=info; self.keyword=kw
+    self.info=info; self.keyword = ""
     self.pageNo = 0; self.results = []
 
   def parseResult(self, soup) -> list: raise NotImplementedError()
@@ -48,16 +49,23 @@ class BaseEngine:
       return res
 
     makelog(f"{self.info.name} {self.keyword} #{self.pageNo} n={len(self.results)}")
-    try: self.results.extend(getPageResults())
-    except Exception as e:
-      makelog(f"Failed to get page! {e}", 1)
+    self.results.extend(getPageResults())
 
-  def search(self, amount=5):
+  def search(self, kw=None, amount=10):
+    if kw != None and kw != self.keyword:
+      self.pageNo, self.results = 0, []
+      self.keyword = kw #kw=None:keep
     started = time.time()
     while len(self.results) < amount and (time.time() - started) < self.timeout:
-      self._addResult(self.info.url, self.getRequestParams())
-      self.pageNo += 1
+      try:
+        self._addResult(self.info.url, self.getRequestParams())
+        self.pageNo += 1
+      except Exception as e:
+        makelog(f"Failed to get page! {e}", 1)
 
     if len(self.results) < amount:
       makelog(f"Search {self.keyword} timed out", 2)
     return self.results
+
+def let(transform, x):
+  return transform(x) if x != None else None
